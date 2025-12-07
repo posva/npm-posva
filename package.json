@@ -6,6 +6,7 @@
   "description": "Hi! I'm Eduardo (posva), part of Vue, author of Vue Router and Pinia",
   "main": "index.js",
   "scripts": {
+    "build": "echo Building...",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
