@@ -17,6 +17,18 @@
     "index.js"
   ],
   "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "author": {
+    "name": "Eduardo San Martin Morote",
+    "email": "posva13@gmail.com"
+  },
+  "funding": "https://github.com/sponsors/posva",
+  "homepage": "https://esm.dev",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/posva/npm-posva.git"
+  },
+  "bugs": {
+    "url": "https://github.com/posva/npm-posva/issues"
+  },
+  "license": "MIT"
 }
