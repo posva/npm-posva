@@ -1,14 +1,14 @@
 import fs from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { dirname, join, relative } from 'node:path'
+import { dirname, join, relative, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import minimist from 'minimist'
 import chalk from 'chalk'
 import semver from 'semver'
 import prompts from '@posva/prompts'
 import { execa } from 'execa'
+// TODO: replace with just a loop or native promise methods
 import pSeries from 'p-series'
-import { globby } from 'globby'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -20,7 +20,6 @@ const {
   dry: isDryRun,
   skipCleanCheck: skipCleanGitCheck,
   noDepsUpdate,
-  noPublish,
   noLockUpdate,
   all: skipChangeCheck,
 } = args
@@ -37,7 +36,6 @@ Flags:
   --dry               Dry run
   --skipCleanCheck    Skip checking if the git repo is clean
   --noDepsUpdate      Skip updating dependencies in package.json files
-  --noPublish         Skip publishing packages
   --noLockUpdate      Skips updating the lock with "pnpm install"
   --all               Skip checking if the packages have changed since last release
 `.trim(),
@@ -50,39 +48,24 @@ Flags:
 //   (semver.prerelease(currentVersion) && semver.prerelease(currentVersion)[0])
 const EXPECTED_BRANCH = 'main'
 // this package will use tags like v1.0.0 while the rest will use the full package name like @pinia/testing@1.0.0
-const MAIN_PKG_NAME = '@pinia/colada'
-// whether the main package is at the root of the mono repo or this is not a mono repo
-const IS_MAIN_PKG_ROOT = true
+const MAIN_PKG_NAME = 'posva'
+// whether the main package is at the root of the mono repo or true if this is not a mono repo
+const IS_MAIN_PKG_AT_ROOT = true
 // array of folders of packages to release
 const PKG_FOLDERS = [
   // comment for multiline format
-  // @pinia/colada
   join(__dirname, '..'),
-  // @pinia/colada-nuxt
-  join(__dirname, '../nuxt'),
-  // @pinia/colada-devtools
-  join(__dirname, '../devtools'),
-  // globby expects `/` even on windows
-  ...(await globby(join(__dirname, '../plugins/*').replace(/\\/g, '/'), {
-    onlyFiles: false,
-  })),
+  // join(__dirname, '../packages/testing'),
+  // join(__dirname, '../packages/nuxt'),
 ]
 
 // files to add and commit after building a new version
 const FILES_TO_COMMIT = [
   // comment for multiline format
   'package.json',
-  'pnpm-lock.yaml',
   'CHANGELOG.md',
-  // plugins
-  'plugins/*/package.json',
-  'plugins/*/CHANGELOG.md',
-  // devtools
-  'devtools/package.json',
-  'devtools/CHANGELOG.md',
-  // nuxt
-  'nuxt/package.json',
-  'nuxt/CHANGELOG.md',
+  // 'packages/*/package.json',
+  // 'packages/*/CHANGELOG.md',
 ]
 
 /**
@@ -216,8 +199,6 @@ async function main() {
           .concat([{ value: 'custom', title: 'custom' }]),
       })
 
-      console.log(release)
-
       if (release === 'custom') {
         version = (
           await prompts({
@@ -260,6 +241,22 @@ async function main() {
   step('\nUpdating versions in package.json files...')
   await updateVersions(pkgWithVersions)
 
+  if (!IS_MAIN_PKG_AT_ROOT) {
+    step('\nCopying README from root to main package...')
+    const originalReadme = resolve(__dirname, '../README.md')
+    const targetReadme = resolve(
+      __dirname,
+      '../',
+      pkgWithVersions.find((p) => p.name === MAIN_PKG_NAME).relativePath,
+      'README.md',
+    )
+    if (!isDryRun) {
+      await fs.copyFile(originalReadme, targetReadme)
+    } else {
+      console.log(`(skipped) cp "${originalReadme}" "${targetReadme}"`)
+    }
+  }
+
   if (!noLockUpdate) {
     step('\nUpdating lock...')
     await runIfNotDry(`pnpm`, ['install'])
@@ -290,10 +287,12 @@ async function main() {
           '--commit-path',
           // in the case of a mono repo with the main package at the root
           // using `.` would add all the changes of all packages
-          ...(pkg.name === MAIN_PKG_NAME && IS_MAIN_PKG_ROOT
+          ...(pkg.name === MAIN_PKG_NAME && IS_MAIN_PKG_AT_ROOT
             ? [join(pkg.path, 'src'), join(pkg.path, 'package.json')]
             : ['.']),
-          ...(pkg.name === MAIN_PKG_NAME && IS_MAIN_PKG_ROOT ? [] : ['--lerna-package', pkg.name]),
+          ...(pkg.name === MAIN_PKG_NAME && IS_MAIN_PKG_AT_ROOT
+            ? []
+            : ['--lerna-package', pkg.name]),
           ...(pkg.name === MAIN_PKG_NAME ? [] : ['--tag-prefix', `${pkg.name}@`]),
         ],
         { cwd: pkg.path },
@@ -318,7 +317,7 @@ async function main() {
 
   step('\nBuilding all packages...')
   if (!skipBuild) {
-    // the main package is needed for plugins to work
+    // Build the main package in case others need it
     await runIfNotDry('pnpm', ['run', 'build'])
     // avoid building every package if we only want to release the main package
     const otherPkgs = pkgWithVersions.filter(({ name }) => name !== MAIN_PKG_NAME)
@@ -361,18 +360,9 @@ async function main() {
     await runIfNotDry('git', ['tag', '-a', `${tagName}`, '-m', `Release ${tagName}`])
   }
 
-  if (!noPublish) {
-    step('\nPublishing packages...')
-    for (const pkg of pkgWithVersions) {
-      await publishPackage(pkg)
-    }
-
-    step('\nPushing to Github...')
-    await runIfNotDry('git', ['push', 'origin', ...versionsToPush])
-    await runIfNotDry('git', ['push'])
-  } else {
-    console.log(chalk.bold.white(`Skipping publishing...`))
-  }
+  step('\nPushing to Github...')
+  await runIfNotDry('git', ['push', 'origin', ...versionsToPush])
+  await runIfNotDry('git', ['push'])
 }
 
 /**
@@ -416,37 +406,6 @@ function updateDeps(pkg, depType, updatedPackages) {
       }
     }
   })
-}
-
-async function publishPackage(pkg) {
-  step(`Publishing ${pkg.name}...`)
-
-  try {
-    await runIfNotDry(
-      'pnpm',
-      [
-        'publish',
-        ...(optionTag ? ['--tag', optionTag] : []),
-        ...(skipCleanGitCheck ? ['--no-git-checks'] : []),
-        '--access',
-        'public',
-        // only needed for branches other than main
-        '--publish-branch',
-        EXPECTED_BRANCH,
-      ],
-      {
-        cwd: pkg.path,
-        stdio: 'pipe',
-      },
-    )
-    console.log(chalk.green(`Successfully published ${pkg.name}@${pkg.version}`))
-  } catch (e) {
-    if (e.stderr.match(/previously published/)) {
-      console.log(chalk.red(`Skipping already published: ${pkg.name}`))
-    } else {
-      throw e
-    }
-  }
 }
 
 /**
@@ -512,6 +471,7 @@ async function getChangedPackages(...folders) {
           '--name-only',
           lastTag,
           '--',
+          // TODO: should allow build files tsdown.config.ts
           // apparently {src,package.json} doesn't work
           join(folder, 'src'),
           // TODO: should not check dev deps and should compare to last tag changes
