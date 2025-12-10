@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "posva",
-  "packageManager": "pnpm@10.24.0",
+  "packageManager": "pnpm@10.25.0",
   "type": "module",
   "version": "0.0.5",
   "description": "Hi! I'm Eduardo (posva), part of Vue, author of Vue Router and Pinia",
@@ -10,6 +10,7 @@
     ".": "./index.js"
   },
   "scripts": {
+    "lint": "oxfmt --check",
     "build": "echo Building...",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -30,5 +31,16 @@
   "bugs": {
     "url": "https://github.com/posva/npm-posva/issues"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "lint-staged": "^16.2.7",
+    "oxfmt": "^0.17.0",
+    "simple-hooks": "^0.1.1"
+  },
+  "simple-git-hooks": {
+    "pre-commit": "lint-staged"
+  },
+  "lint-staged": {
+    "*": "oxfmt --no-error-on-unmatched-pattern"
+  }
 }
