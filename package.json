@@ -11,7 +11,7 @@
   },
   "scripts": {
     "prepare": "simple-git-hooks",
-    "lint": "oxfmt --check",
+    "lint:format": "oxfmt",
     "build": "echo Building...",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
