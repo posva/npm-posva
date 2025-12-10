@@ -281,7 +281,7 @@ async function main() {
           'CHANGELOG.md',
           '--same-file',
           '-p',
-          'conventionalcommits',
+          'angular',
           '-r',
           changelogExists ? '1' : '0',
           '--commit-path',
