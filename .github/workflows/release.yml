@@ -5,6 +5,12 @@ on:
     tags:
       - 'v*' # main package tags
       - '*@*' # monorepo package tags
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag to run the workflow with'
+        required: true
+        type: string
 
 permissions:
   contents: write # for the GitHub Changelog
@@ -20,7 +26,10 @@ jobs:
 
       - name: Get tag
         id: vars
-        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: |
+          TAG="${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}"
+          echo "Using tag: $TAG"
+          echo "TAG=$TAG" >> $GITHUB_OUTPUT
 
       # Determine path and package name from the tag
       - name: Resolve package folder
