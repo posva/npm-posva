@@ -1,17 +1,69 @@
-name: Release
+name: Publish to npm
 
 on:
   push:
     tags:
-      - 'v*'
-      - '**@*' # monorepo package tags
+      - 'v*' # main package tags
+      - '*@*' # monorepo package tags
+
+permissions:
+  contents: write # for the GitHub Changelog
+  id-token: write # required for npm trusted publishing
 
 jobs:
   release:
-    uses: sxzz/workflows/.github/workflows/release.yml@v1
-    with:
-      publish: true
-      build: pnpm run build
-    permissions:
-      contents: write
-      id-token: write
+    steps:
+      - name: Setup JS
+        uses: sxzz/workflows/setup-js@v1
+        with:
+          fetch-all: false
+
+      - name: Get tag
+        id: vars
+        run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      # Determine path and package name from the tag
+      - name: Resolve package folder
+        id: resolve
+        run: |
+          TAG="${{ steps.vars.outputs.TAG }}"
+
+          # ---------------------------
+          # MAIN PACKAGE (vX.Y.Z)
+          # ---------------------------
+          if [[ "$TAG" =~ ^v[0-9] ]]; then
+            echo "PACKAGE_PATH=." >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # --------------------------------
+          # SCOPED PACKAGES e.g. @posva/name@1.2.3
+          # --------------------------------
+          PKG_NAME=$(echo "$TAG" | sed -E 's/(.+)@.+/\1/')
+
+          # Define your custom mapping table in bash
+          declare -A MAP=(
+            ["@posva/mono-repo-test-plugin-a"]="plugins/test-a"
+            ["@posva/mono-repo-test-package"]="test-package"
+          )
+
+          if [[ -z "${MAP[$PKG_NAME]}" ]]; then
+            echo "❌ Unknown package name '$PKG_NAME' — add it to the MAP" >&2
+            exit 1
+          fi
+
+          echo "PACKAGE_PATH=${MAP[$PKG_NAME]}" >> $GITHUB_OUTPUT
+
+      - name: Generate GitHub Changelog
+        run: pnpx changelogithub
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build
+        run: pnpm build
+        working-directory: ${{ steps.resolve.outputs.PACKAGE_PATH }}
+
+      - name: Publish to NPM
+        run: pnpm publish
+        working-directory: ${{ steps.resolve.outputs.PACKAGE_PATH }}
