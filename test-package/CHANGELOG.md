@@ -1,3 +1,9 @@
+## [0.0.10](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-package@0.0.9...@posva/mono-repo-test-package@0.0.10) (2025-12-11)
+
+### Features
+
+- wow ([4842d15](https://github.com/posva/npm-posva/commit/4842d1580944242cddfb9d7a889514199020b2d1))
+
 ## [0.0.9](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-package@0.0.8...@posva/mono-repo-test-package@0.0.9) (2025-12-11)
 
 ### Bug Fixes
