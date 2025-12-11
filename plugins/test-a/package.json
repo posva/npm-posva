@@ -1,6 +1,7 @@
 {
   "name": "@posva/mono-repo-test-plugin-a",
   "packageManager": "pnpm@10.25.0",
+  "repository": "posva/npm-posva",
   "publishConfig": {
     "access": "public"
   },
