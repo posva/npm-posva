@@ -77,7 +77,8 @@ jobs:
       - name: Setup JS
         uses: sxzz/workflows/setup-js@v1
         with:
-          fetch-all: false
+          fetch-all: true # needed for the changeloggithub
+          # in actions/checkout fetch-depth: 0
 
       - name: Generate GitHub Changelog
         run: pnpx changelogithub
