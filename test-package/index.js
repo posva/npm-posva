@@ -1,2 +1,2 @@
-// change counter = 2
+// change counter = 3
 export const foo = 'bar'
