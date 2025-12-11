@@ -15,7 +15,6 @@ const __dirname = dirname(__filename)
 
 const args = minimist(process.argv.slice(2))
 const {
-  skipBuild,
   tag: optionTag,
   dry: isDryRun,
   skipCleanCheck: skipCleanGitCheck,
@@ -31,7 +30,6 @@ Usage: node release.mjs [flags]
        node release.mjs [ -h | --help ]
 
 Flags:
-  --skipBuild         Skip building packages
   --tag               Publish under a given npm dist tag
   --dry               Dry run
   --skipCleanCheck    Skip checking if the git repo is clean
@@ -322,29 +320,6 @@ async function main() {
 
   if (!isChangelogCorrect) {
     return
-  }
-
-  step('\nBuilding all packages...')
-  if (!skipBuild) {
-    // Build the main package in case others need it
-    await runIfNotDry('pnpm', ['run', 'build'])
-    // avoid building every package if we only want to release the main package
-    const otherPkgs = pkgWithVersions.filter(({ name }) => name !== MAIN_PKG_NAME)
-    if (otherPkgs.length > 0) {
-      await runIfNotDry('pnpm', [
-        'run',
-        '--stream',
-        '--parallel',
-        // build only on changed packages
-        ...pkgWithVersions.flatMap(({ relativePath }) =>
-          // the root package has already been built
-          relativePath === '' ? [] : ['--filter', `./${relativePath}`],
-        ),
-        'build',
-      ])
-    }
-  } else {
-    console.log(`(skipped)`)
   }
 
   const { stdout } = await run('git', ['diff'], { stdio: 'pipe' })
