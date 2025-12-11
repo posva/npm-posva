@@ -24,6 +24,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
       - run: pnpm run lint
+      - run: pnpm run types
+      - run: pnpm run build
 
       # when using coverage
       # - uses: codecov/codecov-action@v5

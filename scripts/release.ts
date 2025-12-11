@@ -1,10 +1,10 @@
 import fs from 'node:fs/promises'
 import { existsSync } from 'node:fs'
-import { dirname, join, relative, resolve } from 'node:path'
+import { dirname, join, relative } from 'node:path'
 import { parseArgs } from 'node:util'
 import { fileURLToPath } from 'node:url'
 import chalk from 'chalk'
-import semver from 'semver'
+import semver, { type ReleaseType } from 'semver'
 import prompts from '@posva/prompts'
 import { execa, type Options as ExecaOptions } from 'execa'
 
@@ -191,7 +191,7 @@ async function main() {
     const prerelease = semver.prerelease(version)
     const preId = prerelease && prerelease[0]
 
-    const versionIncrements = [
+    const versionIncrements: ReleaseType[] = [
       'patch',
       'minor',
       'major',
@@ -256,7 +256,7 @@ async function main() {
   // put the main package first as others might depend on it
   const mainPkgIndex = packagesToRelease.findIndex(({ name }) => name === MAIN_PKG_NAME)
   if (mainPkgIndex > 0) {
-    packagesToRelease.unshift(packagesToRelease.splice(mainPkgIndex, 1)[0])
+    packagesToRelease.unshift(packagesToRelease.splice(mainPkgIndex, 1)[0]!)
   }
 
   const { yes: isReleaseConfirmed } = await prompts({
@@ -391,7 +391,7 @@ function updateDeps(
   Object.keys(deps).forEach((dep) => {
     const updatedDep = updatedPackages.find((pkg) => pkg.name === dep)
     // avoid updated peer deps that are external like @vue/devtools-api
-    if (dep && updatedDep) {
+    if (dep && updatedDep && deps[dep]) {
       // skip any workspace reference, pnpm will handle it
       if (deps[dep].startsWith('workspace:')) {
         console.log(chalk.yellow.dim(`${pkg.name} -> ${depType} -> ${dep}@${deps[dep]} (skipped)`))
