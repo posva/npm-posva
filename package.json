@@ -13,6 +13,7 @@
     "prepare": "simple-git-hooks",
     "release": "node ./scripts/release.ts",
     "lint:format": "oxfmt",
+    "lint": "oxfmt --check",
     "build": "echo Building...",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
