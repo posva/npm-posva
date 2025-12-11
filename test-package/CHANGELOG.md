@@ -1,3 +1,9 @@
+## [0.0.13](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-package@0.0.12...@posva/mono-repo-test-package@0.0.13) (2025-12-11)
+
+### Features
+
+- multi editing ([a128cb5](https://github.com/posva/npm-posva/commit/a128cb547d3ac6c966102ab731db552c23ccfdb8))
+
 ## [0.0.12](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-package@0.0.11...@posva/mono-repo-test-package@0.0.12) (2025-12-11)
 
 ### Features
