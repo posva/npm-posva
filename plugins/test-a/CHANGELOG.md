@@ -1,3 +1,9 @@
+## [0.0.4](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-plugin-a@0.0.3...@posva/mono-repo-test-plugin-a@0.0.4) (2025-12-11)
+
+### Features
+
+- change counter ([a287e28](https://github.com/posva/npm-posva/commit/a287e287385985d4ccb2bb36a0f36693b01dbb6d))
+
 ## [0.0.3](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-plugin-a@0.0.2...@posva/mono-repo-test-plugin-a@0.0.3) (2025-12-11)
 
 ### Features
