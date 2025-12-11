@@ -18,6 +18,7 @@ permissions:
 
 jobs:
   release:
+    runs-on: ubuntu-latest
     steps:
       - name: Setup JS
         uses: sxzz/workflows/setup-js@v1
