@@ -3,8 +3,8 @@ name: Publish to npm
 on:
   push:
     tags:
-      - 'v*' # main package tags
-      - '*@*' # monorepo package tags
+      - '*' # we filter in if because ** doesn't work well
+
   workflow_dispatch:
     inputs:
       tag:
@@ -19,6 +19,13 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    if: |
+      startsWith(github.ref_name, 'v') ||
+      contains(github.ref_name, '@') &&
+      (
+        github.ref_name =~ '.+@[0-9]+\.[0-9]+\.[0-9]+$'
+      )
+
     steps:
       - name: Setup JS
         uses: sxzz/workflows/setup-js@v1
