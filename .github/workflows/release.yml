@@ -13,6 +13,7 @@ name: Publish to npm
 # Update this file:
 # - use environment if set
 # - Adapt the if condition that prevents running on forks
+# - update PACKAGE_PATH="." if package is not at root
 # - Update the MAP variable to match your packages
 
 on:
