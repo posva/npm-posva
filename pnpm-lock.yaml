@@ -41,6 +41,10 @@ importers:
         specifier: ^2.13.1
         version: 2.13.1
 
+  plugins/test-a: {}
+
+  test-package: {}
+
 packages:
   '@conventional-changelog/git-client@2.5.1':
     resolution:

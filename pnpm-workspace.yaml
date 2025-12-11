@@ -1,2 +1,5 @@
 onlyBuiltDependencies:
   - simple-git-hooks
+packages:
+  - test-package
+  - plugins/*
