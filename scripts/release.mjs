@@ -55,6 +55,8 @@ const IS_MAIN_PKG_AT_ROOT = true
 const PKG_FOLDERS = [
   // comment for multiline format
   join(__dirname, '..'),
+  join(__dirname, '../test-package'),
+  join(__dirname, '../plugins/test-a'),
   // join(__dirname, '../packages/testing'),
   // join(__dirname, '../packages/nuxt'),
 ]
@@ -64,6 +66,12 @@ const FILES_TO_COMMIT = [
   // comment for multiline format
   'package.json',
   'CHANGELOG.md',
+
+  'plugins/*/package.json',
+  'plugins/*/CHANGELOG.md',
+
+  'test-package/package.json',
+  'test-package/CHANGELOG.md',
   // 'packages/*/package.json',
   // 'packages/*/CHANGELOG.md',
 ]
