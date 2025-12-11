@@ -7,8 +7,6 @@ import chalk from 'chalk'
 import semver from 'semver'
 import prompts from '@posva/prompts'
 import { execa, type Options as ExecaOptions } from 'execa'
-// TODO: replace with just a loop or native promise methods
-import pSeries from 'p-series'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -186,75 +184,74 @@ async function main() {
 
   step(`Ready to release ${packagesToRelease.map(({ name }) => chalk.bold.white(name)).join(', ')}`)
 
-  const pkgWithVersions = await pSeries(
-    packagesToRelease.map(({ name, path, pkg, relativePath }) => async () => {
-      let { version } = pkg
+  const pkgWithVersions: PackageInfo[] = []
+  for (const { name, path, pkg, relativePath } of packagesToRelease) {
+    let { version } = pkg
 
-      const prerelease = semver.prerelease(version)
-      const preId = prerelease && prerelease[0]
+    const prerelease = semver.prerelease(version)
+    const preId = prerelease && prerelease[0]
 
-      const versionIncrements = [
-        'patch',
-        'minor',
-        'major',
-        ...(preId ? (['prepatch', 'preminor', 'premajor', 'prerelease'] as const) : []),
-      ]
+    const versionIncrements = [
+      'patch',
+      'minor',
+      'major',
+      ...(preId ? (['prepatch', 'preminor', 'premajor', 'prerelease'] as const) : []),
+    ]
 
-      const betaVersion = semver.inc(version, 'prerelease', 'beta')
+    const betaVersion = semver.inc(version, 'prerelease', 'beta')
 
-      const { release } = await prompts({
-        type: 'select',
-        name: 'release',
-        message: `Select release type for ${chalk.bold.white(name)}`,
-        choices: versionIncrements
-          .map((release) => {
-            const newVersion = semver.inc(version, release, preId as string)
-            return {
-              value: newVersion,
-              title: `${release}: ${name} (${newVersion})`,
-            }
-          })
-          .concat(
-            optionTag === 'beta'
-              ? [
-                  {
-                    title: `beta: ${name} (${betaVersion})`,
-                    value: betaVersion,
-                  },
-                ]
-              : [],
-          )
-          .concat([{ value: 'custom', title: 'custom' }]),
-      })
+    const { release } = await prompts({
+      type: 'select',
+      name: 'release',
+      message: `Select release type for ${chalk.bold.white(name)}`,
+      choices: versionIncrements
+        .map((release) => {
+          const newVersion = semver.inc(version, release, preId as string)
+          return {
+            value: newVersion,
+            title: `${release}: ${name} (${newVersion})`,
+          }
+        })
+        .concat(
+          optionTag === 'beta'
+            ? [
+                {
+                  title: `beta: ${name} (${betaVersion})`,
+                  value: betaVersion,
+                },
+              ]
+            : [],
+        )
+        .concat([{ value: 'custom', title: 'custom' }]),
+    })
 
-      if (release === 'custom') {
-        version = (
-          await prompts({
-            type: 'text',
-            name: 'version',
-            message: `Input custom version (${chalk.bold.white(name)})`,
-            initial: version,
-          })
-        ).version
-      } else {
-        version = release
-      }
+    if (release === 'custom') {
+      version = (
+        await prompts({
+          type: 'text',
+          name: 'version',
+          message: `Input custom version (${chalk.bold.white(name)})`,
+          initial: version,
+        })
+      ).version
+    } else {
+      version = release
+    }
 
-      if (!semver.valid(version)) {
-        throw new Error(`invalid target version: ${version}`)
-      }
+    if (!semver.valid(version)) {
+      throw new Error(`invalid target version: ${version}`)
+    }
 
-      return {
-        name,
-        path,
-        relativePath,
-        version,
-        pkg,
-        // start is set later
-        start: '',
-      }
-    }),
-  )
+    pkgWithVersions.push({
+      name,
+      path,
+      relativePath,
+      version,
+      pkg,
+      // start is set later
+      start: '',
+    })
+  }
 
   // put the main package first as others might depend on it
   const mainPkgIndex = packagesToRelease.findIndex(({ name }) => name === MAIN_PKG_NAME)
