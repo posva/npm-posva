@@ -1,3 +1,9 @@
+## [0.0.4](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-package@0.0.3...@posva/mono-repo-test-package@0.0.4) (2025-12-11)
+
+### Features
+
+- add change ([892b366](https://github.com/posva/npm-posva/commit/892b3666df91651209999436c89d1703d147801d))
+
 ## [0.0.3](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-package@0.0.2...@posva/mono-repo-test-package@0.0.3) (2025-12-11)
 
 ### Features
