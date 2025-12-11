@@ -9,6 +9,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "build": "echo skip",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
