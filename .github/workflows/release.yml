@@ -3,14 +3,7 @@ name: Publish to npm
 on:
   push:
     tags:
-      - '*' # we filter in if because ** doesn't work well
-
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag to run the workflow with'
-        required: true
-        type: string
+      - '**' # we filter manually otherwise it doesn't work well
 
 permissions:
   contents: write # for the GitHub Changelog
@@ -42,15 +35,10 @@ jobs:
           echo "Tag does not match expected patterns. Skipping job."
           exit 1
 
-      - name: Setup JS
-        uses: sxzz/workflows/setup-js@v1
-        with:
-          fetch-all: false
-
       - name: Get tag
         id: vars
         run: |
-          TAG="${{ github.ref_type == 'tag' && github.ref_name || inputs.tag }}"
+          TAG="${{ github.ref_type == 'tag' && github.ref_name }}"
           echo "Using tag: $TAG"
           echo "TAG=$TAG" >> $GITHUB_OUTPUT
 
@@ -85,6 +73,11 @@ jobs:
           fi
 
           echo "PACKAGE_PATH=${MAP[$PKG_NAME]}" >> $GITHUB_OUTPUT
+
+      - name: Setup JS
+        uses: sxzz/workflows/setup-js@v1
+        with:
+          fetch-all: false
 
       - name: Generate GitHub Changelog
         run: pnpx changelogithub
