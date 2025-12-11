@@ -90,5 +90,5 @@ jobs:
         working-directory: ${{ steps.resolve.outputs.PACKAGE_PATH }}
 
       - name: Publish to NPM
-        run: pnpm publish
+        run: pnpm publish --access public --no-git-checks
         working-directory: ${{ steps.resolve.outputs.PACKAGE_PATH }}
