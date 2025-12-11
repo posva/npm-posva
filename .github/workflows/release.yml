@@ -17,6 +17,11 @@ jobs:
       contains(github.ref_name, '@')
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0 # needed for changelogithub
+
       - name: Resolve tag info
         id: resolve
         run: |
@@ -78,11 +83,19 @@ jobs:
           echo "  PACKAGE_PATH=$PACKAGE_PATH"
           echo "  PREVIOUS_TAG=$PREVIOUS_TAG"
 
-      - name: Setup JS
-        uses: sxzz/workflows/setup-js@v1
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v6
         with:
-          fetch-all: true # needed for the changeloggithub
-          # in actions/checkout fetch-depth: 0
+          node-version: lts/*
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        shell: bash
+        run: pnpm install --frozen-lockfile
 
       - name: Generate GitHub Changelog
         run: pnpx changelogithub --from "$FROM_TAG" --to "$TAG"
