@@ -11,7 +11,7 @@
   },
   "scripts": {
     "prepare": "simple-git-hooks",
-    "release": "node ./scripts/release.mjs",
+    "release": "node ./scripts/release.ts",
     "lint:format": "oxfmt",
     "build": "echo Building...",
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -41,7 +41,6 @@
     "conventional-changelog-angular": "^8.1.0",
     "execa": "^9.6.1",
     "lint-staged": "^16.2.7",
-    "minimist": "^1.2.8",
     "oxfmt": "^0.17.0",
     "p-series": "^3.0.0",
     "semver": "^7.7.3",

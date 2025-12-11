@@ -1,33 +1,45 @@
 import fs from 'node:fs/promises'
 import { existsSync } from 'node:fs'
 import { dirname, join, relative, resolve } from 'node:path'
+import { parseArgs } from 'node:util'
 import { fileURLToPath } from 'node:url'
-import minimist from 'minimist'
 import chalk from 'chalk'
 import semver from 'semver'
 import prompts from '@posva/prompts'
-import { execa } from 'execa'
+import { execa, type Options as ExecaOptions } from 'execa'
 // TODO: replace with just a loop or native promise methods
 import pSeries from 'p-series'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const args = minimist(process.argv.slice(2))
 const {
-  tag: optionTag,
-  dry: isDryRun,
-  skipCleanCheck: skipCleanGitCheck,
-  noDepsUpdate,
-  noLockUpdate,
-  all: skipChangeCheck,
-} = args
+  values: {
+    tag: optionTag,
+    dry: isDryRun,
+    skipCleanCheck: skipCleanGitCheck,
+    noDepsUpdate,
+    noLockUpdate,
+    all: skipChangeCheck,
+    help: showHelp,
+  },
+} = parseArgs({
+  options: {
+    tag: { type: 'string' },
+    dry: { type: 'boolean', default: false },
+    skipCleanCheck: { type: 'boolean', default: false },
+    noDepsUpdate: { type: 'boolean', default: false },
+    noLockUpdate: { type: 'boolean', default: false },
+    all: { type: 'boolean', default: false },
+    help: { type: 'boolean', short: 'h', default: false },
+  },
+})
 
-if (args.h || args.help) {
+if (showHelp) {
   console.log(
     `
-Usage: node release.mjs [flags]
-       node release.mjs [ -h | --help ]
+Usage: node release.ts [flags]
+       node release.ts [ -h | --help ]
 
 Flags:
   --tag               Publish under a given npm dist tag
@@ -74,23 +86,33 @@ const FILES_TO_COMMIT = [
   // 'packages/*/CHANGELOG.md',
 ]
 
-/**
- * @type {typeof execa}
- */
-const run = (bin, args, opts = {}) => execa(bin, args, { stdio: 'inherit', ...opts })
-/**
- * @param bin {string}
- * @param args {string[]}
- * @param opts {import('execa').Options}
- */
-const dryRun = async (bin, args, opts = {}) =>
+const run = (bin: string, args: string[], opts: ExecaOptions = {}) =>
+  execa(bin, args, { stdio: 'inherit', ...opts })
+
+const dryRun = async (bin: string, args: string[], opts: unknown = {}) =>
   console.log(chalk.blue(`[dry-run] ${bin} ${args.join(' ')}`), opts)
+
 const runIfNotDry = isDryRun ? dryRun : run
 
-/**
- * @param msg {string[]}
- */
-const step = (...msg) => console.log(chalk.cyan(...msg))
+const step = (...msg: string[]) => console.log(chalk.cyan(...msg))
+
+interface PackageJson {
+  name: string
+  version: string
+  private?: boolean
+  dependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
+  [key: string]: any
+}
+
+interface PackageInfo {
+  name: string
+  path: string
+  relativePath: string
+  version: string
+  pkg: PackageJson
+  start: string
+}
 
 async function main() {
   if (!skipCleanGitCheck) {
@@ -120,7 +142,7 @@ async function main() {
     )
 
     const isOutdatedGit = isOutdatedRE.test(
-      (await run('git', ['remote', 'show', 'origin'], { stdio: 'pipe' })).stdout,
+      (await run('git', ['remote', 'show', 'origin'], { stdio: 'pipe' })).stdout as string,
     )
 
     if (isOutdatedGit) {
@@ -175,7 +197,7 @@ async function main() {
         'patch',
         'minor',
         'major',
-        ...(preId ? ['prepatch', 'preminor', 'premajor', 'prerelease'] : []),
+        ...(preId ? (['prepatch', 'preminor', 'premajor', 'prerelease'] as const) : []),
       ]
 
       const betaVersion = semver.inc(version, 'prerelease', 'beta')
@@ -186,7 +208,7 @@ async function main() {
         message: `Select release type for ${chalk.bold.white(name)}`,
         choices: versionIncrements
           .map((release) => {
-            const newVersion = semver.inc(version, release, preId)
+            const newVersion = semver.inc(version, release, preId as string)
             return {
               value: newVersion,
               title: `${release}: ${name} (${newVersion})`,
@@ -222,12 +244,20 @@ async function main() {
         throw new Error(`invalid target version: ${version}`)
       }
 
-      return { name, path, relativePath, version, pkg }
+      return {
+        name,
+        path,
+        relativePath,
+        version,
+        pkg,
+        // start is set later
+        start: '',
+      }
     }),
   )
 
   // put the main package first as others might depend on it
-  const mainPkgIndex = packagesToRelease.find(({ name }) => name === MAIN_PKG_NAME)
+  const mainPkgIndex = packagesToRelease.findIndex(({ name }) => name === MAIN_PKG_NAME)
   if (mainPkgIndex > 0) {
     packagesToRelease.unshift(packagesToRelease.splice(mainPkgIndex, 1)[0])
   }
@@ -253,7 +283,7 @@ async function main() {
     const targetReadme = resolve(
       __dirname,
       '../',
-      pkgWithVersions.find((p) => p.name === MAIN_PKG_NAME).relativePath,
+      pkgWithVersions.find((p) => p.name === MAIN_PKG_NAME)!.relativePath,
       'README.md',
     )
     if (!isDryRun) {
@@ -336,7 +366,7 @@ async function main() {
   }
 
   step('\nCreating tags...')
-  const versionsToPush = []
+  const versionsToPush: string[] = []
   for (const pkg of pkgWithVersions) {
     const tagName = pkg.name === MAIN_PKG_NAME ? `v${pkg.version}` : `${pkg.name}@${pkg.version}`
 
@@ -349,11 +379,7 @@ async function main() {
   await runIfNotDry('git', ['push'])
 }
 
-/**
- *
- * @param packageList {{ name: string; path: string; version: string, pkg: any }[]}
- */
-async function updateVersions(packageList) {
+async function updateVersions(packageList: PackageInfo[]) {
   return Promise.all(
     packageList.map(({ pkg, version, path, name }) => {
       pkg.version = version
@@ -373,7 +399,11 @@ async function updateVersions(packageList) {
   )
 }
 
-function updateDeps(pkg, depType, updatedPackages) {
+function updateDeps(
+  pkg: PackageJson,
+  depType: 'dependencies' | 'peerDependencies',
+  updatedPackages: PackageInfo[],
+) {
   const deps = pkg[depType]
   if (!deps) return
   step(`Updating ${chalk.bold(depType)} for ${chalk.bold.white(pkg.name)}...`)
@@ -394,10 +424,8 @@ function updateDeps(pkg, depType, updatedPackages) {
 
 /**
  * Get the last tag published for a package or null if there are no tags
- *
- * @param {string} pkgName - package name
  */
-async function getLastTag(pkgName) {
+async function getLastTag(pkgName: string): Promise<string> {
   try {
     const { stdout } = await run(
       'git',
@@ -413,8 +441,8 @@ async function getLastTag(pkgName) {
       },
     )
 
-    return stdout
-  } catch (error) {
+    return stdout as string
+  } catch (error: any) {
     console.log(chalk.dim(`Couldn't get "${chalk.bold(pkgName)}" last tag, using first commit...`))
 
     // 128 is the git exit code when there is nothing to describe
@@ -422,17 +450,14 @@ async function getLastTag(pkgName) {
       console.error(error)
     }
     const { stdout } = await run('git', ['rev-list', '--max-parents=0', 'HEAD'], { stdio: 'pipe' })
-    return stdout
+    return stdout as string
   }
 }
 
 /**
  * Get the packages that have changed. Based on `lerna changed` but without lerna.
- *
- * @param {string[]} folders
- * @returns {Promise<{ name: string; path: string; relativePath: string; pkg: any; version: string; start: string }[]} a promise of changed packages
  */
-async function getChangedPackages(...folders) {
+async function getChangedPackages(...folders: string[]): Promise<PackageInfo[]> {
   const pkgs = await Promise.all(
     folders.map(async (folder) => {
       if (!(await fs.lstat(folder)).isDirectory()) {
@@ -440,7 +465,7 @@ async function getChangedPackages(...folders) {
         return null
       }
 
-      const pkg = JSON.parse(await fs.readFile(join(folder, 'package.json'), 'utf-8'))
+      const pkg: PackageJson = JSON.parse(await fs.readFile(join(folder, 'package.json'), 'utf-8'))
       if (pkg.private) {
         console.info(chalk.dim(`Skipping "${pkg.name}" it's private`))
         return null
@@ -448,22 +473,24 @@ async function getChangedPackages(...folders) {
 
       const lastTag = await getLastTag(pkg.name)
 
-      const { stdout: hasChanges } = await run(
-        'git',
-        [
-          'diff',
-          '--name-only',
-          lastTag,
-          '--',
-          // TODO: should allow build files tsdown.config.ts
-          // apparently {src,package.json} doesn't work
-          join(folder, 'src'),
-          join(folder, 'index.js'),
-          // TODO: should not check dev deps and should compare to last tag changes
-          join(folder, 'package.json'),
-        ],
-        { stdio: 'pipe' },
-      )
+      const hasChanges = (
+        await run(
+          'git',
+          [
+            'diff',
+            '--name-only',
+            lastTag,
+            '--',
+            // TODO: should allow build files tsdown.config.ts
+            // apparently {src,package.json} doesn't work
+            join(folder, 'src'),
+            join(folder, 'index.js'),
+            // TODO: should not check dev deps and should compare to last tag changes
+            join(folder, 'package.json'),
+          ],
+          { stdio: 'pipe' },
+        )
+      ).stdout as string
       const relativePath = relative(join(__dirname, '..'), folder)
 
       if (hasChanges || skipChangeCheck) {
@@ -492,7 +519,7 @@ async function getChangedPackages(...folders) {
     }),
   )
 
-  return pkgs.filter((p) => p)
+  return pkgs.filter((p): p is PackageInfo => !!p)
 }
 
 main().catch((error) => {
