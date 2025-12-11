@@ -27,10 +27,7 @@
   },
   "funding": "https://github.com/sponsors/posva",
   "homepage": "https://esm.dev",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/posva/npm-posva.git"
-  },
+  "repository": "posva/npm-posva",
   "bugs": {
     "url": "https://github.com/posva/npm-posva/issues"
   },
