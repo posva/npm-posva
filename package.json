@@ -3,7 +3,7 @@
   "name": "posva",
   "packageManager": "pnpm@10.28.0",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Hi! I'm Eduardo (posva), part of Vue, author of Vue Router and Pinia",
   "main": "index.js",
   "bin": "./dist/cli.js",

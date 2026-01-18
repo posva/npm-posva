@@ -1,3 +1,5 @@
+## [1.0.1](https://github.com/posva/npm-posva/compare/v1.0.0...v1.0.1) (2026-01-18)
+
 # [1.0.0](https://github.com/posva/npm-posva/compare/v0.1.3...v1.0.0) (2026-01-18)
 
 ## [0.1.3](https://github.com/posva/npm-posva/compare/v0.1.2...v0.1.3) (2025-12-11)
