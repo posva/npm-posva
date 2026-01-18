@@ -6,6 +6,7 @@
   "version": "0.1.3",
   "description": "Hi! I'm Eduardo (posva), part of Vue, author of Vue Router and Pinia",
   "main": "index.js",
+  "bin": "./bin/cli.ts",
   "exports": {
     ".": "./index.js"
   },
@@ -15,11 +16,14 @@
     "lint:format": "oxfmt",
     "lint": "oxfmt --check",
     "types": "tsgo",
+    "dev": "node --watch --experimental-strip-types --no-warnings bin/cli.ts",
     "build": "echo Building...",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
-    "index.js"
+    "index.js",
+    "avatar-transparent@2x.png",
+    "bin/"
   ],
   "keywords": [],
   "author": {
@@ -33,6 +37,9 @@
     "url": "https://github.com/posva/npm-posva/issues"
   },
   "license": "MIT",
+  "engines": {
+    "node": ">=22.6.0"
+  },
   "devDependencies": {
     "@posva/prompts": "^2.4.4",
     "@types/node": "^25.0.0",
