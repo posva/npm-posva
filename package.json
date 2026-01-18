@@ -23,6 +23,7 @@
   "files": [
     "index.js",
     "avatar-transparent@2x.png",
+    "avatar.txt",
     "bin/"
   ],
   "keywords": [],
