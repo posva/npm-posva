@@ -6,7 +6,7 @@
   "version": "1.0.0",
   "description": "Hi! I'm Eduardo (posva), part of Vue, author of Vue Router and Pinia",
   "main": "index.js",
-  "bin": "./bin/cli.ts",
+  "bin": "./dist/cli.js",
   "exports": {
     ".": "./index.js"
   },
@@ -14,10 +14,10 @@
     "prepare": "simple-git-hooks",
     "release": "node ./scripts/release.ts",
     "lint:format": "oxfmt",
+    "build": "rolldown bin/cli.ts -d dist --platform node",
     "lint": "oxfmt --check",
     "types": "tsgo",
     "dev": "node --watch --experimental-strip-types --no-warnings bin/cli.ts",
-    "build": "echo Building...",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "files": [
@@ -42,7 +42,7 @@
   },
   "devDependencies": {
     "@posva/prompts": "^2.4.4",
-    "@types/node": "^25.0.0",
+    "@types/node": "^25.0.9",
     "@types/semver": "^7.7.1",
     "@typescript/native-preview": "7.0.0-dev.20251211.1",
     "chalk": "^5.6.2",
@@ -50,6 +50,7 @@
     "conventional-changelog-angular": "^8.1.0",
     "lint-staged": "^16.2.7",
     "oxfmt": "^0.17.0",
+    "rolldown": "1.0.0-beta.60",
     "semver": "^7.7.3",
     "simple-git-hooks": "^2.13.1"
   },
