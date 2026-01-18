@@ -72,7 +72,7 @@ const graphicalImage = getGraphicalImage()
 
 // ASCII avatar fallback
 function getAsciiAvatarLines(): string[] {
-  const asciiPath = join(__dirname, 'avatar.txt')
+  const asciiPath = join(__dirname, '..', 'avatar.txt')
   const avatarRaw = existsSync(asciiPath) ? readFileSync(asciiPath, 'utf-8') : ''
   return avatarRaw
     .replace(/\x1b\[\?25[lh]/g, '')
