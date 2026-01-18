@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url'
 import chalk from 'chalk'
 import semver, { type ReleaseType } from 'semver'
 import prompts from '@posva/prompts'
-import { execa, type Options as ExecaOptions } from 'execa'
+import { spawn } from 'node:child_process'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -84,8 +84,52 @@ const FILES_TO_COMMIT = [
   // 'packages/*/CHANGELOG.md',
 ]
 
-const run = (bin: string, args: string[], opts: ExecaOptions = {}) =>
-  execa(bin, args, { stdio: 'inherit', ...opts })
+interface RunOptions {
+  stdio?: 'inherit' | 'pipe'
+  cwd?: string
+}
+
+interface RunResult {
+  stdout: string
+}
+
+function run(bin: string, args: string[], opts: RunOptions = {}): Promise<RunResult> {
+  return new Promise((resolve, reject) => {
+    const { stdio = 'inherit', cwd } = opts
+
+    const child = spawn(bin, args, {
+      cwd,
+      stdio: stdio === 'pipe' ? ['inherit', 'pipe', 'pipe'] : 'inherit',
+    })
+
+    let stdout = ''
+    let stderr = ''
+
+    if (stdio === 'pipe') {
+      child.stdout?.on('data', (data: Buffer) => {
+        stdout += data.toString()
+      })
+      child.stderr?.on('data', (data: Buffer) => {
+        stderr += data.toString()
+      })
+    }
+
+    child.on('error', reject)
+
+    child.on('close', (code) => {
+      const result = { stdout: stdout.trimEnd() }
+      if (code !== 0) {
+        const error = new Error(`Command failed: ${bin} ${args.join(' ')}`) as Error & {
+          exitCode: number | null
+        }
+        error.exitCode = code
+        reject(error)
+      } else {
+        resolve(result)
+      }
+    })
+  })
+}
 
 const dryRun = async (bin: string, args: string[], opts: unknown = {}) =>
   console.log(chalk.blue(`[dry-run] ${bin} ${args.join(' ')}`), opts)
