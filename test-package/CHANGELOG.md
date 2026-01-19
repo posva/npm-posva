@@ -1,3 +1,5 @@
+## [0.0.14-beta.1](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-package@0.0.14-beta.0...@posva/mono-repo-test-package@0.0.14-beta.1) (2026-01-19)
+
 ## [0.0.14-beta.0](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-package@0.0.13...@posva/mono-repo-test-package@0.0.14-beta.0) (2026-01-19)
 
 ## [0.0.13](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-package@0.0.12...@posva/mono-repo-test-package@0.0.13) (2025-12-11)
