@@ -374,7 +374,8 @@ async function main() {
     return
   }
 
-  const { stdout } = await run('git', ['diff'], { stdio: 'pipe' })
+  // check for staged and unstaged changes
+  const { stdout } = await run('git', ['diff', 'HEAD'], { stdio: 'pipe' })
   if (stdout) {
     step('\nCommitting changes...')
     await runIfNotDry('git', ['add', ...FILES_TO_COMMIT])
