@@ -19,9 +19,6 @@ importers:
       '@typescript/native-preview':
         specifier: 7.0.0-dev.20251211.1
         version: 7.0.0-dev.20251211.1
-      chalk:
-        specifier: ^5.6.2
-        version: 5.6.2
       conventional-changelog:
         specifier: ^7.1.1
         version: 7.1.1(conventional-commits-filter@5.0.0)
@@ -427,13 +424,6 @@ packages:
         integrity: sha512-yQbXgO/OSZVD2IsiLlro+7Hf6Q18EJrKSEsdoMzKePKXct3gvD8oLcOQdIzGupr5Fj+EDe8gO/lxc1BzfMpxvA==,
       }
     engines: { node: '>=8' }
-
-  chalk@5.6.2:
-    resolution:
-      {
-        integrity: sha512-7NzBL0rN6fMUW+f7A6Io4h40qQlG+xGmtMxfbnH/K7TAtt8JQWVQK+6g0UXKMeVJoyV5EkkNsErQ8pVD3bLHbA==,
-      }
-    engines: { node: ^12.17.0 || ^14.13 || >=16.0.0 }
 
   cli-cursor@5.0.0:
     resolution:
@@ -1066,8 +1056,6 @@ snapshots:
   braces@3.0.3:
     dependencies:
       fill-range: 7.1.1
-
-  chalk@5.6.2: {}
 
   cli-cursor@5.0.0:
     dependencies:
