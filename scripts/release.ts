@@ -348,6 +348,7 @@ async function main() {
           ...(pkg.name === MAIN_PKG_NAME && IS_MAIN_PKG_AT_ROOT
             ? [join(pkg.path, 'src'), join(pkg.path, 'package.json')]
             : ['.']),
+          // TODO: not sure this is good, it broke vue-router
           ...(pkg.name === MAIN_PKG_NAME && IS_MAIN_PKG_AT_ROOT
             ? []
             : ['--lerna-package', pkg.name]),
