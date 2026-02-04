@@ -18,7 +18,7 @@
     "lint": "oxfmt --check",
     "types": "tsgo",
     "dev": "node --watch --experimental-strip-types --no-warnings bin/cli.ts",
-    "test": "pnpm lint && pnpm build && node dist/cli.js"
+    "test": "pnpm lint && pnpm types && pnpm build && node dist/cli.js"
   },
   "files": [
     "index.js",
