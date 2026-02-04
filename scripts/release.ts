@@ -483,7 +483,7 @@ async function getLastTag(pkgName: string): Promise<string> {
       .filter((t): t is { tag: string; version: semver.SemVer } => t.version !== null)
       .sort((a, b) => semver.rcompare(a.version, b.version))
 
-    if (sortedTags.length === 0) {
+    if (!sortedTags[0]) {
       throw new Error('No valid semver tags found')
     }
 
