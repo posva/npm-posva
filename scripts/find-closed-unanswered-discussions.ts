@@ -19,7 +19,7 @@ if (help) {
 Usage: node scripts/find-closed-unanswered-discussions.ts [flags]
 
 Find discussions that are:
-  - Closed with state reason RESOLVED (excludes DUPLICATE/OUTDATED)
+  - Closed but not as DUPLICATE/OUTDATED
   - Without a marked answer
   - Replied to by the target user
 
@@ -60,6 +60,11 @@ interface DiscussionPageNode {
     slug: string
     name: string
   } | null
+}
+
+interface DiscussionCategoryNode {
+  slug: string
+  name: string
 }
 
 interface ReplyNode {
@@ -165,6 +170,60 @@ function categoryMatches(category: DiscussionPageNode['category'], filter: strin
   )
 }
 
+function categoryNodeMatches(category: DiscussionCategoryNode, filter: string) {
+  const normalizedFilter = filter.toLowerCase()
+  return (
+    category.slug.toLowerCase() === normalizedFilter ||
+    category.name.toLowerCase() === normalizedFilter
+  )
+}
+
+async function fetchDiscussionCategories(owner: string, name: string) {
+  const categories: DiscussionCategoryNode[] = []
+  let cursor: string | null = null
+
+  for (;;) {
+    const data = await graphqlRequest<{
+      repository: {
+        discussionCategories: {
+          nodes: DiscussionCategoryNode[]
+          pageInfo: PageInfo
+        }
+      } | null
+    }>(
+      `
+        query ($owner: String!, $name: String!, $after: String) {
+          repository(owner: $owner, name: $name) {
+            discussionCategories(first: 50, after: $after) {
+              nodes {
+                slug
+                name
+              }
+              pageInfo {
+                hasNextPage
+                endCursor
+              }
+            }
+          }
+        }
+      `,
+      { owner, name, after: cursor },
+    )
+
+    if (!data.repository) {
+      throw new Error(`Repository not found or inaccessible: ${owner}/${name}`)
+    }
+
+    categories.push(...data.repository.discussionCategories.nodes)
+
+    const { hasNextPage, endCursor } = data.repository.discussionCategories.pageInfo
+    if (!hasNextPage || !endCursor) break
+    cursor = endCursor
+  }
+
+  return categories
+}
+
 async function fetchClosedUnansweredDiscussions(owner: string, name: string, category?: string) {
   const results: DiscussionPageNode[] = []
   let cursor: string | null = null
@@ -210,13 +269,15 @@ async function fetchClosedUnansweredDiscussions(owner: string, name: string, cat
     }
 
     for (const discussion of data.repository.discussions.nodes) {
-      if (
-        !discussion.answer &&
-        discussion.stateReason === 'RESOLVED' &&
-        (!category || categoryMatches(discussion.category, category))
-      ) {
-        results.push(discussion)
-      }
+      if (discussion.answer) continue
+
+      // Include closed discussions unless they were explicitly closed as duplicate/outdated.
+      if (discussion.stateReason === 'DUPLICATE' || discussion.stateReason === 'OUTDATED') continue
+      if (discussion.stateReason === 'REOPENED') continue
+
+      if (category && !categoryMatches(discussion.category, category)) continue
+
+      results.push(discussion)
     }
 
     const { hasNextPage, endCursor } = data.repository.discussions.pageInfo
@@ -266,7 +327,9 @@ async function hasMatchingReplyInComment(commentId: string, user: string) {
     )
 
     const replies = data.node?.replies
-    if (!replies) return false
+    if (!replies) {
+      throw new Error(`Could not read replies for discussion comment ${commentId}.`)
+    }
 
     if (replies.nodes.some((reply) => authorMatches(reply.author, user))) {
       return true
@@ -331,8 +394,16 @@ async function hasUserParticipation(
       { owner, name, discussionNumber, after: cursor },
     )
 
-    const comments = data.repository?.discussion?.comments
-    if (!comments) return false
+    if (!data.repository) {
+      throw new Error(
+        `Repository not found or inaccessible while reading discussion #${discussionNumber}.`,
+      )
+    }
+
+    const comments = data.repository.discussion?.comments
+    if (!comments) {
+      throw new Error(`Could not read comments for discussion #${discussionNumber}.`)
+    }
 
     for (const comment of comments.nodes) {
       if (authorMatches(comment.author, user)) return true
@@ -356,6 +427,23 @@ async function hasUserParticipation(
 async function main() {
   const user = await resolveUserLogin()
   const categoryLabel = categoryArg ? ` in category "${categoryArg}"` : ''
+
+  if (categoryArg) {
+    const categories = await fetchDiscussionCategories(owner, name)
+    const categoryExists = categories.some((category) => categoryNodeMatches(category, categoryArg))
+
+    if (!categoryExists) {
+      const possibleCategories = categories.map(
+        (category) => `  - ${category.slug} (${category.name})`,
+      )
+      throw new Error(
+        `Unknown category "${categoryArg}" for ${owner}/${name}.\nAvailable categories:\n${
+          possibleCategories.length ? possibleCategories.join('\n') : '  - none'
+        }`,
+      )
+    }
+  }
+
   console.error(
     `Scanning ${owner}/${name}${categoryLabel} for closed unanswered discussions with participation by ${user}...`,
   )
