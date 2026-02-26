@@ -1,6 +1,8 @@
 import { parseArgs } from 'node:util'
 
 const GITHUB_GRAPHQL_ENDPOINT = 'https://api.github.com/graphql'
+// Requires GITHUB_TOKEN in the environment for all repositories (public or private).
+// A fine-grained token works for this script.
 
 const {
   values: { repo: repoArg, user: userArg, category: categoryArg, help },
@@ -86,7 +88,9 @@ interface CommentNode {
 
 const token = process.env.GITHUB_TOKEN
 if (!token) {
-  throw new Error('Missing GITHUB_TOKEN environment variable.')
+  throw new Error(
+    'Missing GITHUB_TOKEN environment variable. Token is always required (public and private repos).',
+  )
 }
 
 const repository = repoArg ?? process.env.REPOSITORY
