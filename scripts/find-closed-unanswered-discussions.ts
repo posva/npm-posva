@@ -86,6 +86,56 @@ interface CommentNode {
   }
 }
 
+/**
+ * GraphQL response for fetching discussion categories.
+ */
+interface CategoriesResponse {
+  repository: {
+    discussionCategories: {
+      nodes: DiscussionCategoryNode[]
+      pageInfo: PageInfo
+    }
+  } | null
+}
+
+/**
+ * GraphQL response for fetching closed discussions.
+ */
+interface DiscussionsResponse {
+  repository: {
+    discussions: {
+      nodes: DiscussionPageNode[]
+      pageInfo: PageInfo
+    }
+  } | null
+}
+
+/**
+ * GraphQL response for paginated replies on a discussion comment.
+ */
+interface RepliesResponse {
+  node: {
+    replies: {
+      nodes: ReplyNode[]
+      pageInfo: PageInfo
+    }
+  } | null
+}
+
+/**
+ * GraphQL response for paginated comments on a discussion.
+ */
+interface CommentsResponse {
+  repository: {
+    discussion: {
+      comments: {
+        nodes: CommentNode[]
+        pageInfo: PageInfo
+      }
+    } | null
+  } | null
+}
+
 const token = process.env.GITHUB_TOKEN
 if (!token) {
   throw new Error(
@@ -106,7 +156,7 @@ if (repositoryParts.length !== 2 || !repositoryParts[0] || !repositoryParts[1]) 
 const owner = repositoryParts[0]
 const name = repositoryParts[1]
 
-async function graphqlRequest<T>(query: string, variables: Record<string, unknown>) {
+async function graphqlRequest<T>(query: string, variables: Record<string, unknown>): Promise<T> {
   const response = await fetch(GITHUB_GRAPHQL_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -187,14 +237,7 @@ async function fetchDiscussionCategories(owner: string, name: string) {
   let cursor: string | null = null
 
   for (;;) {
-    const data = await graphqlRequest<{
-      repository: {
-        discussionCategories: {
-          nodes: DiscussionCategoryNode[]
-          pageInfo: PageInfo
-        }
-      } | null
-    }>(
+    const data: CategoriesResponse = await graphqlRequest<CategoriesResponse>(
       `
         query ($owner: String!, $name: String!, $after: String) {
           repository(owner: $owner, name: $name) {
@@ -233,14 +276,7 @@ async function fetchClosedUnansweredDiscussions(owner: string, name: string, cat
   let cursor: string | null = null
 
   for (;;) {
-    const data = await graphqlRequest<{
-      repository: {
-        discussions: {
-          nodes: DiscussionPageNode[]
-          pageInfo: PageInfo
-        }
-      } | null
-    }>(
+    const data: DiscussionsResponse = await graphqlRequest<DiscussionsResponse>(
       `
         query ($owner: String!, $name: String!, $after: String) {
           repository(owner: $owner, name: $name) {
@@ -300,14 +336,7 @@ async function hasMatchingReplyInComment(commentId: string, user: string) {
   let cursor: string | null = null
 
   for (;;) {
-    const data = await graphqlRequest<{
-      node: {
-        replies: {
-          nodes: ReplyNode[]
-          pageInfo: PageInfo
-        }
-      } | null
-    }>(
+    const data: RepliesResponse = await graphqlRequest<RepliesResponse>(
       `
         query ($commentId: ID!, $after: String) {
           node(id: $commentId) {
@@ -354,16 +383,7 @@ async function hasUserParticipation(
   let cursor: string | null = null
 
   for (;;) {
-    const data = await graphqlRequest<{
-      repository: {
-        discussion: {
-          comments: {
-            nodes: CommentNode[]
-            pageInfo: PageInfo
-          }
-        } | null
-      } | null
-    }>(
+    const data: CommentsResponse = await graphqlRequest<CommentsResponse>(
       `
         query ($owner: String!, $name: String!, $discussionNumber: Int!, $after: String) {
           repository(owner: $owner, name: $name) {

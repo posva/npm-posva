@@ -1,12 +1,29 @@
 {
   "$schema": "https://json.schemastore.org/package",
   "name": "posva",
-  "packageManager": "pnpm@10.28.0",
-  "type": "module",
   "version": "1.0.2",
   "description": "Hi! I'm Eduardo (posva), part of Vue, author of Vue Router and Pinia",
-  "main": "index.js",
+  "keywords": [],
+  "homepage": "https://esm.dev",
+  "bugs": {
+    "url": "https://github.com/posva/npm-posva/issues"
+  },
+  "license": "MIT",
+  "author": {
+    "name": "Eduardo San Martin Morote",
+    "email": "posva13@gmail.com"
+  },
+  "repository": "posva/npm-posva",
+  "funding": "https://github.com/sponsors/posva",
   "bin": "./dist/cli.js",
+  "files": [
+    "index.js",
+    "avatar-transparent@2x.png",
+    "avatar.txt",
+    "bin/"
+  ],
+  "type": "module",
+  "main": "index.js",
   "exports": {
     ".": "./index.js"
   },
@@ -20,38 +37,17 @@
     "dev": "node --watch --experimental-strip-types --no-warnings bin/cli.ts",
     "test": "pnpm lint && pnpm types && pnpm build && node dist/cli.js"
   },
-  "files": [
-    "index.js",
-    "avatar-transparent@2x.png",
-    "avatar.txt",
-    "bin/"
-  ],
-  "keywords": [],
-  "author": {
-    "name": "Eduardo San Martin Morote",
-    "email": "posva13@gmail.com"
-  },
-  "funding": "https://github.com/sponsors/posva",
-  "homepage": "https://esm.dev",
-  "repository": "posva/npm-posva",
-  "bugs": {
-    "url": "https://github.com/posva/npm-posva/issues"
-  },
-  "license": "MIT",
-  "engines": {
-    "node": ">=22.6.0"
-  },
   "devDependencies": {
     "@posva/prompts": "^2.4.4",
-    "@types/node": "^25.2.0",
+    "@types/node": "^25.5.0",
     "@types/semver": "^7.7.1",
-    "@typescript/native-preview": "7.0.0-dev.20260202.1",
-    "conventional-changelog": "^7.1.1",
-    "conventional-changelog-angular": "^8.1.0",
-    "lint-staged": "^16.2.7",
-    "oxfmt": "^0.17.0",
-    "rolldown": "1.0.0-rc.2",
-    "semver": "^7.7.3",
+    "@typescript/native-preview": "7.0.0-dev.20260330.1",
+    "conventional-changelog": "^7.2.0",
+    "conventional-changelog-angular": "^8.3.1",
+    "lint-staged": "^16.4.0",
+    "oxfmt": "^0.42.0",
+    "rolldown": "1.0.0-rc.12",
+    "semver": "^7.7.4",
     "simple-git-hooks": "^2.13.1"
   },
   "simple-git-hooks": {
@@ -59,5 +55,9 @@
   },
   "lint-staged": {
     "*": "oxfmt --no-error-on-unmatched-pattern"
-  }
+  },
+  "engines": {
+    "node": ">=22.6.0"
+  },
+  "packageManager": "pnpm@10.28.0"
 }
