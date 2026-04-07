@@ -1,6 +1,7 @@
 repository:
   homepage: https://esm.dev
   description: npmx posva
+
 labels:
   - name: bug
     new_name: 🐞 bug
