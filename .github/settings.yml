@@ -5,6 +5,7 @@
 repository:
   homepage: https://esm.dev
   description: npmx posva
+  topics: posva, cli, card
 
 labels:
   - name: bug
