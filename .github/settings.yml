@@ -1,3 +1,7 @@
+# https://github.com/apps/settings
+# https://github.com/repository-settings/app
+# NOTE: Color values are quoted to avoid YAML misinterpreting hex as numbers
+
 repository:
   homepage: https://esm.dev
   description: npmx posva
