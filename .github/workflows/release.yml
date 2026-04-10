@@ -152,7 +152,7 @@ jobs:
         working-directory: ${{ steps.resolve.outputs.PACKAGE_PATH }}
 
       - name: Generate GitHub Changelog
-        run: pnpx changelogithub --from "$FROM_TAG" --to "$TAG"
+        run: pnpx changelogithub@14.0.0 --from "$FROM_TAG" --to "$TAG"
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
