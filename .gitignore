@@ -140,3 +140,4 @@ vite.config.ts.timestamp-*
 .osgrep
 .DS_Store
 dist
+.clack-session.json
