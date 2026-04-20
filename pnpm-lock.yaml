@@ -8,9 +8,9 @@ importers:
 
   .:
     devDependencies:
-      '@posva/prompts':
-        specifier: ^2.4.4
-        version: 2.4.4
+      '@clack/prompts':
+        specifier: npm:@posva/clack-prompts@^1.2.1
+        version: '@posva/clack-prompts@1.2.1'
       '@types/node':
         specifier: ^25.5.0
         version: 25.5.0
@@ -192,9 +192,11 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@posva/prompts@2.4.4':
-    resolution: {integrity: sha512-8aPwklhbSV2VN/NQMBNFkuo8+hlJVdcFRXp4NCIfdcahh3qNEcaSoD8qXjru0OlN1sONJ7le7p6+YUbALaG6Mg==}
-    engines: {node: '>= 14'}
+  '@posva/clack-core@1.2.0':
+    resolution: {integrity: sha512-6nfBwDFR2pt/fRr70ceoIpvgbLokb6mcmHU31m0loENjeSVaFcvQ/vVeoBAane+U7fj5VTTuKYlE1p7gd4+tog==}
+
+  '@posva/clack-prompts@1.2.1':
+    resolution: {integrity: sha512-aoJwvtbOM+VgOFXistYLPvgJWMQQv6i4xy+cxAsSDaKTAbF86J4eJRhWi0c6arPoIIGtLj5rH//WoCS9/JDCeQ==}
 
   '@rolldown/binding-android-arm64@1.0.0-rc.12':
     resolution: {integrity: sha512-pv1y2Fv0JybcykuiiD3qBOBdz6RteYojRFY1d+b95WVuzx211CRh+ytI/+9iVyWQ6koTh5dawe4S/yRfOFjgaA==}
@@ -425,6 +427,15 @@ packages:
   eventemitter3@5.0.4:
     resolution: {integrity: sha512-mlsTRyGaPBjPedk6Bvw+aqbsXDtoAyAzm5MO7JgU+yVRyMQ5O8bD4Kcci7BS85f93veegeCPkL8R4GLClnjLFw==}
 
+  fast-string-truncated-width@1.2.1:
+    resolution: {integrity: sha512-Q9acT/+Uu3GwGj+5w/zsGuQjh9O1TyywhIwAxHudtWrgF09nHOPrvTLhQevPbttcxjr/SNN7mJmfOw/B1bXgow==}
+
+  fast-string-width@1.1.0:
+    resolution: {integrity: sha512-O3fwIVIH5gKB38QNbdg+3760ZmGz0SZMgvwJbA1b2TGXceKE6A2cOlfogh1iw8lr049zPyd7YADHy+B7U4W9bQ==}
+
+  fast-wrap-ansi@0.1.6:
+    resolution: {integrity: sha512-HlUwET7a5gqjURj70D5jl7aC3Zmy4weA1SHUfM0JFI0Ptq987NH2TwbBFLoERhfwk+E+eaq4EK3jXoT+R3yp3w==}
+
   fd-package-json@2.0.0:
     resolution: {integrity: sha512-jKmm9YtsNXN789RS/0mSzOC1NUq9mkVd65vbSSVsKdjGvYXBuE4oWe2QOEoFeRmJg+lPuZxpmrfFclNhoRMneQ==}
 
@@ -448,10 +459,6 @@ packages:
   is-obj@2.0.0:
     resolution: {integrity: sha512-drqDG3cbczxxEJRoOXcOjtdp1J/lyp1mNn0xaznRs8+muBhgQcrnbspox5X5fOw0HnMnbfDzvnEMEtqDEJEo8w==}
     engines: {node: '>=8'}
-
-  kleur@4.1.5:
-    resolution: {integrity: sha512-o+NO+8WrRiQEE4/7nwRJhN1HWpVmJm511pBHUxPLtp0BUISzlBplORYSmTclCnJvQq2tKu/sgl3xVpkc7ZWuQQ==}
-    engines: {node: '>=6'}
 
   lint-staged@16.4.0:
     resolution: {integrity: sha512-lBWt8hujh/Cjysw5GYVmZpFHXDCgZzhrOm8vbcUdobADZNOK/bRshr2kM3DfgrrtR1DQhfupW9gnIXOfiFi+bw==}
@@ -551,6 +558,9 @@ packages:
 
   spdx-license-ids@3.0.23:
     resolution: {integrity: sha512-CWLcCCH7VLu13TgOH+r8p1O/Znwhqv/dbb6lqWy67G+pT1kHmeD/+V36AVb/vq8QMIQwVShJ6Ssl5FPh0fuSdw==}
+
+  std-env@4.1.0:
+    resolution: {integrity: sha512-Rq7ybcX2RuC55r9oaPVEW7/xu3tj8u4GeBYHBWCychFtzMIr86A7e3PPEBPT37sHStKX3+TiX/Fr/ACmJLVlLQ==}
 
   string-argv@0.3.2:
     resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
@@ -699,9 +709,17 @@ snapshots:
   '@oxfmt/binding-win32-x64-msvc@0.42.0':
     optional: true
 
-  '@posva/prompts@2.4.4':
+  '@posva/clack-core@1.2.0':
     dependencies:
-      kleur: 4.1.5
+      fast-wrap-ansi: 0.1.6
+      sisteransi: 1.0.5
+      std-env: 4.1.0
+
+  '@posva/clack-prompts@1.2.1':
+    dependencies:
+      '@posva/clack-core': 1.2.0
+      fast-string-width: 1.1.0
+      fast-wrap-ansi: 0.1.6
       sisteransi: 1.0.5
 
   '@rolldown/binding-android-arm64@1.0.0-rc.12':
@@ -881,6 +899,16 @@ snapshots:
 
   eventemitter3@5.0.4: {}
 
+  fast-string-truncated-width@1.2.1: {}
+
+  fast-string-width@1.1.0:
+    dependencies:
+      fast-string-truncated-width: 1.2.1
+
+  fast-wrap-ansi@0.1.6:
+    dependencies:
+      fast-string-width: 1.1.0
+
   fd-package-json@2.0.0:
     dependencies:
       walk-up-path: 4.0.0
@@ -905,8 +933,6 @@ snapshots:
       get-east-asian-width: 1.5.0
 
   is-obj@2.0.0: {}
-
-  kleur@4.1.5: {}
 
   lint-staged@16.4.0:
     dependencies:
@@ -1044,6 +1070,8 @@ snapshots:
       spdx-license-ids: 3.0.23
 
   spdx-license-ids@3.0.23: {}
+
+  std-env@4.1.0: {}
 
   string-argv@0.3.2: {}
 

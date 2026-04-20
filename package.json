@@ -38,7 +38,7 @@
     "test": "pnpm lint && pnpm types && pnpm build && node dist/cli.js"
   },
   "devDependencies": {
-    "@posva/prompts": "^2.4.4",
+    "@clack/prompts": "npm:@posva/clack-prompts@^1.2.1",
     "@types/node": "^25.5.0",
     "@types/semver": "^7.7.1",
     "@typescript/native-preview": "7.0.0-dev.20260330.1",

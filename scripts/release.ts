@@ -3,7 +3,7 @@ import { dirname, join, relative } from 'node:path'
 import { parseArgs } from 'node:util'
 import { fileURLToPath } from 'node:url'
 import semver, { type ReleaseType } from 'semver'
-import prompts from '@posva/prompts'
+import * as p from '@clack/prompts'
 import { spawn } from 'node:child_process'
 
 /**
@@ -238,26 +238,27 @@ async function main() {
   // if there are more than one package, ask which ones to release
   if (packagesToRelease.length > 1) {
     // allow to select which packages
-    const { pickedPackages } = await prompts({
-      type: 'multiselect',
-      name: 'pickedPackages',
+    const pickedPackages = await p.multiselect<string>({
       message: 'What packages do you want to release?',
-      instructions: false,
-      min: 1,
-      choices: changedPackages.map((pkg) => {
+      required: true,
+      initialValues: changedPackages.map((pkg) => pkg.name),
+      options: changedPackages.map((pkg) => {
         const rel = daysAgo(pkg.lastTagDate)
         const suffix = pkg.lastTag
           ? `${pkg.lastTag}${rel ? ` (${rel})` : ''}`
           : 'no previous release'
         return {
-          title: `${pkg.name} ${c.dim(`— ${suffix}`)}`,
+          label: `${pkg.name} ${c.dim(`— ${suffix}`)}`,
           value: pkg.name,
-          selected: true,
         }
       }),
     })
 
-    // const packagesToRelease = changedPackages
+    if (p.isCancel(pickedPackages)) {
+      p.cancel('Release aborted')
+      return
+    }
+
     packagesToRelease = changedPackages.filter((pkg) => pickedPackages.includes(pkg.name))
   }
 
@@ -284,32 +285,38 @@ async function main() {
           ...(preId ? (['prepatch', 'preminor', 'premajor', 'prerelease'] as const) : []),
         ]
 
-    const { release } = await prompts({
-      type: 'select',
-      name: 'release',
+    const release = await p.select<string>({
       message: `Select release type for ${c.boldWhite(name)}`,
-      choices: versionIncrements
+      options: versionIncrements
         .map((release) => {
           // Use optionTag for prerelease increments when a prerelease tag is specified
           const identifier = isPrereleaseTag ? optionTag : (preId as string)
           const newVersion = semver.inc(version, release, identifier)
           return {
-            value: newVersion,
-            title: `${release}: ${name} (${newVersion})`,
+            value: newVersion!,
+            label: `${release}: ${name} (${newVersion})`,
           }
         })
-        .concat([{ value: 'custom', title: 'custom' }]),
+        .concat([{ value: 'custom', label: 'custom' }]),
     })
 
+    if (p.isCancel(release)) {
+      p.cancel('Release aborted')
+      return
+    }
+
     if (release === 'custom') {
-      version = (
-        await prompts({
-          type: 'text',
-          name: 'version',
-          message: `Input custom version (${c.boldWhite(name)})`,
-          initial: version,
-        })
-      ).version
+      const customVersion = await p.text({
+        message: `Input custom version (${c.boldWhite(name)})`,
+        initialValue: version,
+      })
+
+      if (p.isCancel(customVersion)) {
+        p.cancel('Release aborted')
+        return
+      }
+
+      version = customVersion
     } else {
       version = release
     }
@@ -337,15 +344,14 @@ async function main() {
     packagesToRelease.unshift(packagesToRelease.splice(mainPkgIndex, 1)[0]!)
   }
 
-  const { yes: isReleaseConfirmed } = await prompts({
-    type: 'confirm',
-    name: 'yes',
+  const isReleaseConfirmed = await p.confirm({
     message: `Releasing \n${pkgWithVersions
       .map(({ name, version }) => `  · ${c.white(name)}: ${c.boldYellow(`v${version}`)}`)
       .join('\n')}\nConfirm?`,
   })
 
-  if (!isReleaseConfirmed) {
+  if (p.isCancel(isReleaseConfirmed) || !isReleaseConfirmed) {
+    p.cancel('Release aborted')
     return
   }
 
@@ -401,14 +407,13 @@ async function main() {
     }),
   )
 
-  const { yes: isChangelogCorrect } = await prompts({
-    type: 'confirm',
-    name: 'yes',
+  const isChangelogCorrect = await p.confirm({
     message: 'Are the changelogs correct?',
-    initial: true,
+    initialValue: true,
   })
 
-  if (!isChangelogCorrect) {
+  if (p.isCancel(isChangelogCorrect) || !isChangelogCorrect) {
+    p.cancel('Release aborted')
     return
   }
 
