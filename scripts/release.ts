@@ -393,16 +393,21 @@ async function main() {
     packagesToRelease.unshift(packagesToRelease.splice(mainPkgIndex, 1)[0]!)
   }
 
-  const isReleaseConfirmed = await p.confirm({
-    id: 'confirmRelease',
-    message: `Releasing \n${pkgWithVersions
-      .map(({ name, version }) => `  · ${c.white(name)}: ${c.boldYellow(`v${version}`)}`)
-      .join('\n')}\nConfirm?`,
-  })
+  // Skip confirms in agent mode: they add no value, and a post-changelog confirm
+  // would force the script to re-run after changelog generation (duplicating the
+  // side-effects from updateVersions through conventional-changelog).
+  if (!p.isAgent()) {
+    const isReleaseConfirmed = await p.confirm({
+      id: 'confirmRelease',
+      message: `Releasing \n${pkgWithVersions
+        .map(({ name, version }) => `  · ${c.white(name)}: ${c.boldYellow(`v${version}`)}`)
+        .join('\n')}\nConfirm?`,
+    })
 
-  if (p.isCancel(isReleaseConfirmed) || !isReleaseConfirmed) {
-    p.cancel('Release aborted')
-    return
+    if (p.isCancel(isReleaseConfirmed) || !isReleaseConfirmed) {
+      p.cancel('Release aborted')
+      return
+    }
   }
 
   step('\nUpdating versions in package.json files...')
@@ -457,15 +462,17 @@ async function main() {
     }),
   )
 
-  const isChangelogCorrect = await p.confirm({
-    id: 'confirmChangelog',
-    message: 'Are the changelogs correct?',
-    initialValue: true,
-  })
+  if (!p.isAgent()) {
+    const isChangelogCorrect = await p.confirm({
+      id: 'confirmChangelog',
+      message: 'Are the changelogs correct?',
+      initialValue: true,
+    })
 
-  if (p.isCancel(isChangelogCorrect) || !isChangelogCorrect) {
-    p.cancel('Release aborted')
-    return
+    if (p.isCancel(isChangelogCorrect) || !isChangelogCorrect) {
+      p.cancel('Release aborted')
+      return
+    }
   }
 
   // check for staged and unstaged changes
