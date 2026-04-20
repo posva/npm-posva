@@ -239,6 +239,7 @@ async function main() {
   if (packagesToRelease.length > 1) {
     // allow to select which packages
     const pickedPackages = await p.multiselect<string>({
+      id: 'pickedPackages',
       message: 'What packages do you want to release?',
       required: true,
       initialValues: changedPackages.map((pkg) => pkg.name),
@@ -264,9 +265,9 @@ async function main() {
 
   step(`Ready to release ${packagesToRelease.map(({ name }) => c.boldWhite(name)).join(', ')}`)
 
-  const pkgWithVersions: PackageInfo[] = []
-  for (const { name, path, pkg, relativePath, lastTag, lastTagDate } of packagesToRelease) {
-    let { version } = pkg
+  // Build per-package release-type options up front so we can batch the prompts
+  const releaseConfigs = packagesToRelease.map(({ name, pkg }) => {
+    const { version } = pkg
 
     const prerelease = semver.prerelease(version)
     const preId = prerelease && prerelease[0]
@@ -285,41 +286,89 @@ async function main() {
           ...(preId ? (['prepatch', 'preminor', 'premajor', 'prerelease'] as const) : []),
         ]
 
-    const release = await p.select<string>({
-      message: `Select release type for ${c.boldWhite(name)}`,
-      options: versionIncrements
-        .map((release) => {
-          // Use optionTag for prerelease increments when a prerelease tag is specified
-          const identifier = isPrereleaseTag ? optionTag : (preId as string)
-          const newVersion = semver.inc(version, release, identifier)
-          return {
-            value: newVersion!,
-            label: `${release}: ${name} (${newVersion})`,
-          }
-        })
-        .concat([{ value: 'custom', label: 'custom' }]),
-    })
+    const options = versionIncrements
+      .map((release) => {
+        // Use optionTag for prerelease increments when a prerelease tag is specified
+        const identifier = isPrereleaseTag ? optionTag : (preId as string)
+        const newVersion = semver.inc(version, release, identifier)
+        return {
+          value: newVersion!,
+          label: `${release}: ${name} (${newVersion})`,
+        }
+      })
+      .concat([{ value: 'custom', label: 'custom' }])
 
-    if (p.isCancel(release)) {
+    return { name, currentVersion: version, options }
+  })
+
+  // Ask for release types — batch across packages when more than one
+  const releaseAnswers: Record<string, string | symbol> =
+    releaseConfigs.length === 1
+      ? {
+          [releaseConfigs[0]!.name]: await p.select<string>({
+            id: `release:${releaseConfigs[0]!.name}`,
+            message: `Select release type for ${c.boldWhite(releaseConfigs[0]!.name)}`,
+            options: releaseConfigs[0]!.options,
+          }),
+        }
+      : await p.batch(
+          Object.fromEntries(
+            releaseConfigs.map((cfg) => [
+              cfg.name,
+              p.batch.select<string>({
+                id: `release:${cfg.name}`,
+                message: `Select release type for ${c.boldWhite(cfg.name)}`,
+                options: cfg.options,
+              }),
+            ]),
+          ),
+        )
+
+  for (const answer of Object.values(releaseAnswers)) {
+    if (p.isCancel(answer)) {
       p.cancel('Release aborted')
       return
     }
+  }
 
-    if (release === 'custom') {
-      const customVersion = await p.text({
-        message: `Input custom version (${c.boldWhite(name)})`,
-        initialValue: version,
-      })
+  // For 'custom' selections, ask for an explicit version — batch when more than one
+  const customPkgs = releaseConfigs.filter((cfg) => releaseAnswers[cfg.name] === 'custom')
 
-      if (p.isCancel(customVersion)) {
-        p.cancel('Release aborted')
-        return
-      }
+  const customAnswers: Record<string, string | symbol> =
+    customPkgs.length === 0
+      ? {}
+      : customPkgs.length === 1
+        ? {
+            [customPkgs[0]!.name]: await p.text({
+              id: `custom:${customPkgs[0]!.name}`,
+              message: `Input custom version (${c.boldWhite(customPkgs[0]!.name)})`,
+              initialValue: customPkgs[0]!.currentVersion,
+            }),
+          }
+        : await p.batch(
+            Object.fromEntries(
+              customPkgs.map((cfg) => [
+                cfg.name,
+                p.batch.text({
+                  id: `custom:${cfg.name}`,
+                  message: `Input custom version (${c.boldWhite(cfg.name)})`,
+                  initialValue: cfg.currentVersion,
+                }),
+              ]),
+            ),
+          )
 
-      version = customVersion
-    } else {
-      version = release
+  for (const answer of Object.values(customAnswers)) {
+    if (p.isCancel(answer)) {
+      p.cancel('Release aborted')
+      return
     }
+  }
+
+  const pkgWithVersions: PackageInfo[] = []
+  for (const { name, path, pkg, relativePath, lastTag, lastTagDate } of packagesToRelease) {
+    const selection = releaseAnswers[name] as string
+    const version = selection === 'custom' ? (customAnswers[name] as string) : selection
 
     if (!semver.valid(version)) {
       throw new Error(`invalid target version: ${version}`)
@@ -345,6 +394,7 @@ async function main() {
   }
 
   const isReleaseConfirmed = await p.confirm({
+    id: 'confirmRelease',
     message: `Releasing \n${pkgWithVersions
       .map(({ name, version }) => `  · ${c.white(name)}: ${c.boldYellow(`v${version}`)}`)
       .join('\n')}\nConfirm?`,
@@ -408,6 +458,7 @@ async function main() {
   )
 
   const isChangelogCorrect = await p.confirm({
+    id: 'confirmChangelog',
     message: 'Are the changelogs correct?',
     initialValue: true,
   })
