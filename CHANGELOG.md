@@ -1,3 +1,5 @@
+## [1.0.4](https://github.com/posva/npm-posva/compare/v1.0.3...v1.0.4) (2026-04-20)
+
 ## [1.0.3](https://github.com/posva/npm-posva/compare/v1.0.2...v1.0.3) (2026-04-20)
 
 Agent mode release script
