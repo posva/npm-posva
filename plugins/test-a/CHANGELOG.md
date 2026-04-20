@@ -1,7 +1,5 @@
 ## [0.0.7](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-plugin-a@0.0.6...@posva/mono-repo-test-plugin-a@0.0.7) (2026-04-20)
 
-## [0.0.7](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-plugin-a@0.0.6...@posva/mono-repo-test-plugin-a@0.0.7) (2026-04-20)
-
 ## [0.0.6](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-plugin-a@0.0.5...@posva/mono-repo-test-plugin-a@0.0.6) (2026-01-19)
 
 ## [0.0.5](https://github.com/posva/npm-posva/compare/@posva/mono-repo-test-plugin-a@0.0.4...@posva/mono-repo-test-plugin-a@0.0.5) (2025-12-11)
